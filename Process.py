@@ -20,53 +20,103 @@ def FindStars(img, threshold=50, low=40):
     rawImg = img.load()
 
     # Optimization, will only check every LINESKIP + 1 lines
+    # Kinda misses a lot tho. Generally you'll get 100/2^(LINESKIP - 1)% stars
     LINESKIP = 1
 
-    sizex,sizey = int(img.size[0]/LINESKIP),int(img.size[1]/LINESKIP)
+    sizeX,sizeY = int(img.size[0]/LINESKIP),int(img.size[1]/LINESKIP)
 
     # Filled with tuples of (starLeft, starUp, starRight, starDown)
     stars = []
 
-    for x in range(0,sizex):
-        for y in range(0,sizey):
-            
-            #brightness = sum(rawImg[x * LINESKIP, y * LINESKIP])/3
+    for x in range(0,sizeX):
+        for y in range(0,sizeY):
 
             brightness = CalculateBrightness(rawImg[x * LINESKIP, y * LINESKIP])
 
             if(brightness > threshold):
 
                 # Have to check if star is already in list
-                stars.append(GetStarArea(rawImg, low, (x * LINESKIP, y * LINESKIP)))
+                newStar = GetStarBounds(rawImg, low, (x * LINESKIP, y * LINESKIP), (sizeX, sizeY))
 
-                #rawImg[x * LINESKIP, y * LINESKIP] = (255,0,0) # Check that stars are correctly being selected
+                collided = False
 
-    print(stars)
+                # Chck coll in for loop
+                # Maybe also check if pixel is already inside another star before making it a star to optimize?
+
+                # Check list of stars backwards to find any collisions faster
+                for star in reversed(stars):
+                    if(CheckCollision(star,newStar)):
+                        collided = True
+                        break
+                    
+                if not (collided):
+                    stars.append(newStar)
+
+                    # Potential time save as well
+                    y = newStar[3] + 1
+
+    #print(len(stars)) # Debugging
 
     return 0
 
 # What is that photoshop thing that determines if it should grab the surrounding pixel ??
-def GetStarArea(rawImg, low, pos):
+def GetStarBounds(rawImg, low, pos, size):
     pX,pY = pos[0],pos[1]
 
-    #print("Star found at %d, %d" % (pX, pY))
-
     # Go in a cross to find max radius of point
-    # Go up until not apart of the star, multiply by -1 to flip to other side. And find the edge further down or up.
-    # Do same for right
-
-    x,y = pX,pY
 
     # (x1, y1, x2, y2)
     # (starLeft, starUp, starRight, starDown)
-    star = (0,0,0,0)
 
-    # Check vertical
+    # Tuples are immutable
+    starLeft,starUp,starRight,starDown = 0,0,0,0
+
+    # Marches pos in x and y direction individually by inc
+    def MarchPoint(pos, inc):
+        x,y = pos[0],pos[1]
+
+        while CalculateBrightness(rawImg[x, pY]) > low:
+            x += inc
+            if(x < 0 or x >= size[0]):
+                x -= inc
+                break
+
+
+        while CalculateBrightness(rawImg[pX, y]) > low:
+            y += inc
+            if(y < 0 or y >= size[1]):
+                y -= inc
+                break
+
+        return (x,y)
+
+    # Get right and up
+
+    bounds = MarchPoint(pos, 1)
+
+    starRight,starUp = bounds[0],bounds[1]
+
+    # Get left and down
+
+    bounds = MarchPoint(pos, -1)
+
+    starLeft,starDown = bounds[0],bounds[1]
     
-        
-    # Check horizontal
+    return (starLeft,starUp,starRight,starDown)
 
-    return 0
+def CheckCollision(starA, starB):
+
+    # star = left,up,right,down
+
+    for i in range(0,2):
+        # On i = 0, check if BLeft if between ALeft and ARight
+        # Then check if BRight is between ALeft and ARight
+
+        if((starA[i] < starB[i] & starB[i] < starA[i+2])
+        | (starA[i] < starB[i+2] & starB[i+2] < starA[i+2])):
+            return True
+
+    return False
 
 def CalculateBrightness(pixel=(0,0,0)):
     return sum(pixel)/3
