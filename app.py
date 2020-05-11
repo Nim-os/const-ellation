@@ -5,4 +5,6 @@ base = Image.open("base.png")
 
 prepIMG = Process.PrepImage(base)
 
-Process.FindStars(prepIMG)
+stars = Process.FindStars(prepIMG)
+
+Process.DrawStars(base,stars)
