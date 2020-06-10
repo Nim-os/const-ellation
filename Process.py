@@ -45,12 +45,11 @@ def FindStars(img, threshold=50, low=40):
 
                 # Check list of stars backwards to find any collisions faster
                 for star in reversed(stars):
-                    if(CheckCollision(star,newStar)):
+                    if(CheckCollision(star,(x * LINESKIP, y * LINESKIP))):
                         collided = True
                         break
                 
                 if not (collided):
-                    #rawImg[x,y] = (255,0,0)
                     stars.append(newStar)
 
                     # Potential time save as well
@@ -109,22 +108,32 @@ def GetStarBounds(rawImg, size, low, pos):
     
     return (starLeft,starUp,starRight,starDown)
 
-def CheckCollision(starA, starB):
+def CheckCollision(star, pixel):
 
     # star = left,up,right,down
+    # pixel = x,y
 
-    for i in range(2):
+    if((pixel[0] > star[0] and pixel[0] < star[2])
+        and (pixel[1] > star[1] and pixel[1] < star[3])):
+            return True
+    
+    return False
+
+
+    # DEAD CODE
+    #for i in range(2):
         # On i = 0, check if BLeft if between ALeft and ARight
         # Then check if BRight is between ALeft and ARight
 
-        # NOTE TO SELF: Only check if chosen pixel is inside star. Faster to calculate. Also prevents false positives!!
+        # TO SELF: Only check if chosen pixel is inside star. Faster to calculate. Also prevents false positives!!
 
-        if((starA[i] < starB[i] and starA[i+2] > starB[i])
-        or (starA[i] < starB[i+2] and starA[i+2] > starB[i])):
-            if(star[]):
-                return True
 
-    return False
+
+        #if((starA[i] < starB[i] and starA[i+2] > starB[i])
+        #or (starA[i] < starB[i+2] and starA[i+2] > starB[i])):
+        #    if(star[]):
+        #        return True
+
 
 def CalculateBrightness(pixel=(0,0,0)):
     return sum(pixel)/3
