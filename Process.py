@@ -28,15 +28,15 @@ def FindStars(img, threshold=50, low=40):
     # Filled with tuples of (starLeft, starUp, starRight, starDown)
     stars = []
 
-    for x in range(0,sizeX):
-        for y in range(0,sizeY):
+    for x in range(sizeX):
+        for y in range(sizeY):
 
             brightness = CalculateBrightness(rawImg[x * LINESKIP, y * LINESKIP])
 
             if(brightness > threshold):
 
                 # Have to check if star is already in list
-                newStar = GetStarBounds(rawImg, low, (x * LINESKIP, y * LINESKIP), (sizeX, sizeY))
+                newStar = GetStarBounds(rawImg, (sizeX, sizeY), low, (x * LINESKIP, y * LINESKIP))
 
                 collided = False
 
@@ -48,13 +48,15 @@ def FindStars(img, threshold=50, low=40):
                     if(CheckCollision(star,newStar)):
                         collided = True
                         break
-                    
+                
                 if not (collided):
                     #rawImg[x,y] = (255,0,0)
                     stars.append(newStar)
 
                     # Potential time save as well
-                    y = newStar[1] + 1
+                    # print("Star down: " + str(newStar[3]) + "  |  Before: ", x, " , ", y)
+                    y = newStar[3]
+                    # print(y)
 
     #print(len(stars)) # Debugging
 
@@ -63,7 +65,7 @@ def FindStars(img, threshold=50, low=40):
     return stars
 
 # What is that photoshop thing that determines if it should grab the surrounding pixel ??
-def GetStarBounds(rawImg, low, pos, size):
+def GetStarBounds(rawImg, size, low, pos):
     pX,pY = pos[0],pos[1]
 
     # Go in a cross to find max radius of point
@@ -115,9 +117,12 @@ def CheckCollision(starA, starB):
         # On i = 0, check if BLeft if between ALeft and ARight
         # Then check if BRight is between ALeft and ARight
 
-        if((starA[i] < starB[i] and starB[i] < starA[i+2])
-        or (starA[i] < starB[i+2] and starB[i+2] < starA[i+2])):
-            return True
+        # NOTE TO SELF: Only check if chosen pixel is inside star. Faster to calculate. Also prevents false positives!!
+
+        if((starA[i] < starB[i] and starA[i+2] > starB[i])
+        or (starA[i] < starB[i+2] and starA[i+2] > starB[i])):
+            if(star[]):
+                return True
 
     return False
 
